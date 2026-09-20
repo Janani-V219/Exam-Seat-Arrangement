@@ -1,0 +1,3693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EXAM SEAT PLANNER</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --text-dark: #2c3e50;
+            --text-light: #ecf0f1;
+            --gray-light: #f5f7fa;
+            --gray-medium: #bdc3c7;
+            --gray-dark: #7f8c8d;
+            --gradient-primary: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            --gradient-secondary: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            --gradient-accent: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--gradient-primary);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--gray-medium);
+            text-align: center;
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .sidebar-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 10px 0;
+            flex-grow: 1;
+        }
+
+        .sidebar-menu li {
+            margin: 5px 10px;
+        }
+
+        .sidebar-btn {
+            width: 100%;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-dark);
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-btn:hover {
+            background: var(--gray-light);
+            color: var(--primary-color);
+        }
+
+        .sidebar-btn.active {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin-left: 270px;
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .main-title {
+            color: var(--primary-color);
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .date-time-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .date-input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .date-input-group label {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 14px;
+        }
+
+        .date-input-group input, .date-input-group select {
+            padding: 12px 20px;
+            border: 2px solid var(--gray-medium);
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            background: white;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+
+        .date-input-group input:focus, .date-input-group select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+
+        .exam-info-display {
+            background: var(--gradient-secondary);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .page-section {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
+        .saved-arrangements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .saved-arrangement-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--gray-light);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .saved-arrangement-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--gradient-accent);
+        }
+
+        .saved-arrangement-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            border-color: var(--accent-color);
+        }
+
+        .saved-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .saved-card-date {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .saved-card-day {
+            font-size: 14px;
+            color: var(--gray-dark);
+            background: var(--gray-light);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .saved-card-info {
+            margin-bottom: 15px;
+        }
+
+        .saved-card-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--gray-dark);
+        }
+
+        .saved-card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .view-btn, .delete-saved-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .view-btn {
+            background: var(--accent-color);
+            color: white;
+            flex: 1;
+        }
+
+        .view-btn:hover {
+            background: #2980b9;
+        }
+
+        .delete-saved-btn {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .delete-saved-btn:hover {
+            background: #c0392b;
+        }
+
+        .input-section {
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--accent-color);
+        }
+
+        .section-header i {
+            font-size: 28px;
+            margin-right: 15px;
+            color: var(--accent-color);
+        }
+
+        .section-header h2 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .upload-section {
+            margin: 20px 0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .input-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+            overflow-x: auto;
+            display: block;
+            white-space: nowrap;
+        }
+
+        .input-table thead, .input-table tbody {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .input-table th {
+            background: var(--gradient-secondary);
+            color: white;
+            padding: 18px 12px;
+            font-weight: 600;
+            text-align: left;
+            border-radius: 10px 10px 0 0;
+            font-size: 14px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .input-table td {
+            padding: 15px 12px;
+            background: white;
+            border-bottom: 1px solid var(--gray-light);
+            vertical-align: top;
+        }
+
+        .input-table th:nth-child(1), .input-table td:nth-child(1) { width: 15%; }
+        .input-table th:nth-child(2), .input-table td:nth-child(2) { width: 40%; }
+        .input-table th:nth-child(3), .input-table td:nth-child(3) { width: 25%; }
+        .input-table th:nth-child(4), .input-table td:nth-child(4) { width: 20%; }
+
+        .input-table input, .input-table select, .input-table textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid var(--gray-medium);
+            border-radius: 8px;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .input-table textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        .input-table input:focus, .input-table select:focus, .input-table textarea:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+
+        .dept-entry {
+            background: var(--gray-light);
+            padding: 15px;
+            margin: 8px 0;
+            border-radius: 10px;
+            border: 2px solid var(--gray-medium);
+            transition: all 0.3s ease;
+        }
+
+        .dept-entry:hover {
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.1);
+        }
+
+        .dept-entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .dept-entry-header h4 {
+            color: var(--accent-color);
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .dept-entry-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 2fr;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .dept-entry-grid select,
+        .dept-entry-grid input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--gray-medium);
+            border-radius: 8px;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .dept-entry-grid select:focus,
+        .dept-entry-grid input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+
+        .add-dept-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .add-dept-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .remove-dept-btn {
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .remove-dept-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .add-row-btn, .upload-btn {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 25px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+        }
+
+        .add-row-btn:hover, .upload-btn:hover {
+            background: #219653;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.3);
+        }
+
+        .delete-btn {
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .seating-plan {
+            margin-top: 40px;
+        }
+
+        .exam-header {
+            background: var(--gradient-secondary);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .exam-header h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .exam-details {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .room-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px;
+            margin-top: 25px;
+            padding: 25px;
+            background: var(--gray-light);
+            border-radius: 15px;
+        }
+
+        .room-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            border: 2px solid var(--gray-medium);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .room-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-accent);
+        }
+
+        .room-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .room-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 18px;
+            background: var(--gray-light);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid var(--gray-medium);
+        }
+
+        .seat-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+            gap: 8px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 12px;
+            border: 2px solid var(--gray-medium);
+        }
+
+        .seat-box {
+            width: 45px;
+            height: 45px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 9px;
+            font-weight: 600;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            background: linear-gradient(45deg, var(--dept-color) 70%, var(--year-color) 30%);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .seat-box.empty {
+            background: #e2e8f0;
+            color: #64748b;
+            border: 2px dashed #cbd5e1;
+        }
+
+        .seat-box.absent {
+            background: var(--danger-color) !important;
+            border: 2px dashed var(--danger-color);
+        }
+
+        .seat-box:hover {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .seat-box .roll-label {
+            font-size: 7px;
+            position: absolute;
+            top: 2px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .seat-box .roll-no {
+            font-size: 8px;
+            font-weight: 600;
+        }
+
+        .seat-box .staff {
+            font-size: 7px;
+            margin-top: 2px;
+            font-weight: 400;
+            opacity: 0;
+            position: absolute;
+            bottom: 2px;
+            transition: opacity 0.3s ease;
+        }
+
+        .seat-box:hover .staff {
+            opacity: 1;
+        }
+
+        .action-buttons {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+
+        .generate-btn, .arrange-btn, .clear-btn, .save-btn {
+            padding: 15px 35px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .generate-btn {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .generate-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(52, 152, 219, 0.4);
+        }
+
+        .arrange-btn {
+            background: #8e44ad;
+            color: white;
+        }
+
+        .arrange-btn:hover {
+            background: #7d3c98;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(142, 68, 173, 0.4);
+        }
+
+        .clear-btn {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .clear-btn:hover {
+            background: #c0392b;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(231, 76, 60, 0.4);
+        }
+
+        .save-btn {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .save-btn:hover {
+            background: #219653;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(39, 174, 96, 0.4);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px;
+            color: var(--gray-dark);
+            font-style: italic;
+            font-size: 20px;
+            background: white;
+            border-radius: 15px;
+            border: 2px dashed var(--gray-medium);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.4s ease;
+            color: white;
+            font-weight: 500;
+            max-width: 400px;
+        }
+
+        .notification.success { background: var(--success-color); }
+        .notification.warning { background: var(--warning-color); }
+        .notification.error { background: var(--danger-color); }
+        .notification i { margin-right: 10px; font-size: 18px; }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray-dark);
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: var(--gray-medium);
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        .faculty-section {
+            padding: 20px;
+        }
+
+        .faculty-slot-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .faculty-slot-container h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .faculty-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .faculty-slot {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .faculty-slot:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .faculty-slot.overloaded {
+            border-color: var(--danger-color);
+            background: #fff5f5;
+        }
+
+        .faculty-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .faculty-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .assignment-count {
+            background: var(--accent-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .assignment-count.warning {
+            background: var(--danger-color);
+        }
+
+        .assignment-dates {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .overload-warning {
+            font-size: 11px;
+            color: var(--danger-color);
+            font-weight: 600;
+            background: #ffe6e6;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        .no-faculty {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            grid-column: 1 / -1;
+        }
+
+        .faculty-reset-btn {
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .faculty-reset-btn:hover {
+            background: #c0392b;
+        }
+
+        .faculty-warning-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--danger-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-body ul {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .modal-actions {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .modal-btn.primary {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .modal-btn.secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .modal-btn:hover {
+            opacity: 0.9;
+        }
+
+        .attendance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .attendance-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .absentees-btn {
+            background: var(--warning-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .absentees-btn:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+        }
+
+        .unit-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .unit-btn {
+            background: white;
+            border: 2px solid var(--gray-medium);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .unit-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            border-color: var(--accent-color);
+        }
+
+        .unit-btn.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .unit-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .unit-date {
+            font-size: 12px;
+            color: var(--gray-dark);
+            background: var(--gray-light);
+            padding: 4px 8px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .room-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .room-btn {
+            background: white;
+            border: 2px solid var(--gray-medium);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .room-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            border-color: var(--accent-color);
+        }
+
+        .room-stats {
+            font-size: 14px;
+            color: var(--gray-dark);
+            margin-top: 10px;
+        }
+
+        .auth-section {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            margin: 0 auto;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .auth-section.active {
+            display: block;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: 2px solid var(--gray-medium);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .auth-input:focus {
+            border-color: var(--accent-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .auth-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .auth-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .attendance-grid {
+            display: none;
+        }
+
+        .attendance-grid.active {
+            display: block;
+        }
+
+        .attendance-actions-bottom {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .next-room-btn {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .next-room-btn:hover {
+            background: #219653;
+            transform: translateY(-2px);
+        }
+
+        .absentees-section {
+            margin-top: 40px;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .absentees-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .absentees-table th,
+        .absentees-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--gray-light);
+            text-align: left;
+        }
+
+        .absentees-table th {
+            background: var(--gradient-accent);
+            color: white;
+            font-weight: 600;
+        }
+
+        .delete-absentee-btn {
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .delete-absentee-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .unit-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .unit-view {
+            display: none;
+        }
+
+        .unit-view.active {
+            display: block;
+        }
+
+        .unit-arrangements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .unit-arrangement-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--gray-light);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .unit-arrangement-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--gradient-accent);
+        }
+
+        .unit-arrangement-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            border-color: var(--accent-color);
+        }
+
+        .unit-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .unit-card-date {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .unit-card-unit {
+            font-size: 14px;
+            color: white;
+            background: var(--accent-color);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .unit-card-info {
+            margin-bottom: 15px;
+        }
+
+        .unit-card-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--gray-dark);
+        }
+
+        .unit-card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .fine-amount {
+            font-weight: bold;
+            color: var(--danger-color);
+            background: #ffe6e6;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .total-fine-summary {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            border: 2px solid var(--warning-color);
+        }
+
+        .total-fine-summary h3 {
+            color: var(--warning-color);
+            margin-bottom: 10px;
+        }
+
+        .total-fine-amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--danger-color);
+        }
+
+        .room-details-section {
+            padding: 20px;
+        }
+
+        .block-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .block-box {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 3px solid var(--gray-medium);
+        }
+
+        .block-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .floor-container {
+            margin: 15px 0;
+            padding: 15px;
+            background: var(--gray-light);
+            border-radius: 10px;
+            position: relative;
+            min-height: 150px;
+        }
+
+        .floor-container.drag-over {
+            background: #e3f2fd;
+            border-color: var(--accent-color);
+        }
+
+        .floor-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            min-height: 100px;
+        }
+
+        .room-detail-btn {
+            padding: 15px 10px;
+            border-radius: 8px;
+            border: 2px solid var(--gray-medium);
+            background: white;
+            cursor: move;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .room-detail-btn.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+            z-index: 1000;
+            position: fixed;
+        }
+
+        .room-detail-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: var(--accent-color);
+        }
+
+        .room-detail-btn.disabled {
+            background: #e74c3c;
+            color: white;
+            border-color: #c0392b;
+            opacity: 0.7;
+        }
+
+        .room-detail-btn.disabled:hover {
+            background: #c0392b;
+            border-color: #e74c3c;
+        }
+
+        .room-detail-btn.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .room-number {
+            font-size: 22px;
+            font-weight: 700;
+            color: inherit;
+            margin-bottom: 5px;
+        }
+
+        .room-seats {
+            font-size: 12px;
+            color: var(--gray-dark);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        .room-detail-btn.disabled .room-seats {
+            background: rgba(255, 255, 255, 0.9);
+            color: #e74c3c;
+        }
+
+        .room-detail-btn.active .room-seats {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .room-status-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .matrix-configuration {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--gray-medium);
+        }
+
+        .matrix-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        .matrix-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .matrix-subtitle {
+            color: var(--gray-dark);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .matrix-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .matrix-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .matrix-input-group label {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 14px;
+        }
+
+        .matrix-input-group input {
+            padding: 12px 15px;
+            border: 2px solid var(--gray-medium);
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .matrix-input-group input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+
+        .row-wise-config {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px dashed var(--gray-medium);
+        }
+
+        .row-config-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .row-config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .row-config-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .row-config-item label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .row-config-item input {
+            padding: 8px 12px;
+            border: 2px solid var(--gray-medium);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .matrix-preview {
+            margin-top: 25px;
+            padding: 20px;
+            background: var(--gray-light);
+            border-radius: 12px;
+            border: 2px dashed var(--gray-medium);
+        }
+
+        .matrix-preview h4 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-size: 18px;
+        }
+
+        .matrix-visual {
+            display: inline-grid;
+            gap: 8px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--gray-medium);
+        }
+
+        .matrix-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .matrix-cell {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            background: #e2e8f0;
+            border: 2px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .matrix-cell.filled {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .matrix-total {
+            margin-top: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            font-weight: 600;
+            color: var(--primary-color);
+            text-align: center;
+            border: 2px solid var(--accent-color);
+        }
+
+        .matrix-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid var(--gray-light);
+        }
+
+        .matrix-save-btn, .matrix-cancel-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .matrix-save-btn {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .matrix-save-btn:hover {
+            background: #219653;
+            transform: translateY(-2px);
+        }
+
+        .matrix-cancel-btn {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .matrix-cancel-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .matrix-default-btn {
+            background: var(--warning-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-left: auto;
+        }
+
+        .matrix-default-btn:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+        }
+
+        .room-matrix-list {
+            margin-top: 30px;
+        }
+
+        .room-matrix-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--gray-light);
+            transition: all 0.3s ease;
+        }
+
+        .room-matrix-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: var(--accent-color);
+        }
+
+        .room-matrix-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .room-matrix-name {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 18px;
+        }
+
+        .room-matrix-dimensions {
+            font-size: 14px;
+            color: var(--gray-dark);
+            background: var(--gray-light);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .room-matrix-capacity {
+            font-size: 14px;
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .room-matrix-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .edit-matrix-btn, .delete-matrix-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .edit-matrix-btn {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .edit-matrix-btn:hover {
+            background: #2980b9;
+        }
+
+        .delete-matrix-btn {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .delete-matrix-btn:hover {
+            background: #c0392b;
+        }
+
+        .disabled-rooms-summary {
+            margin-top: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .add-room-btn-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .add-room-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .add-room-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                box-shadow: none;
+            }
+
+            .sidebar-menu {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .sidebar-btn {
+                flex: 1;
+                text-align: center;
+            }
+
+            .container {
+                margin-left: 0;
+                padding: 10px;
+            }
+
+            .main-title {
+                font-size: 28px;
+            }
+
+            .date-time-section {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .unit-section {
+                flex-wrap: wrap;
+            }
+
+            .room-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .generate-btn, .arrange-btn, .clear-btn, .save-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .room-selection {
+                grid-template-columns: 1fr;
+            }
+
+            .unit-selection {
+                grid-template-columns: 1fr;
+            }
+
+            .attendance-actions-bottom {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .absentees-table {
+                font-size: 12px;
+            }
+            
+            .absentees-table th,
+            .absentees-table td {
+                padding: 8px;
+            }
+
+            .rooms-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+
+            .matrix-inputs {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .matrix-actions {
+                flex-direction: column;
+            }
+
+            .matrix-save-btn, .matrix-cancel-btn {
+                width: 100%;
+            }
+
+            .row-config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-graduation-cap"></i> EXAM CELL</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li>
+                <button class="sidebar-btn active" id="nav-configure">
+                    <i class="fas fa-cog"></i> Configure Rooms
+                </button>
+            </li>
+            <li>
+                <button class="sidebar-btn" id="nav-saved">
+                    <i class="fas fa-save"></i> Saved Arrangements
+                </button>
+            </li>
+            <li>
+                <button class="sidebar-btn" id="nav-faculty">
+                    <i class="fas fa-users"></i> Faculty Schedule
+                </button>
+            </li>
+            <li>
+                <button class="sidebar-btn" id="nav-attendance">
+                    <i class="fas fa-clipboard-check"></i> Attendance
+                </button>
+            </li>
+            <li>
+                <button class="sidebar-btn" id="nav-room-details">
+                    <i class="fas fa-door-open"></i> Room Details
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="container">
+        <div class="header" id="configure-header">
+            <h1 class="main-title">
+                <i class="fas fa-graduation-cap"></i>
+                EXAM SEATING ARRANGEMENT SYSTEM
+            </h1>
+            <div class="date-time-section">
+                <div class="date-input-group">
+                    <label for="exam-unit">Exam Unit</label>
+                    <select id="exam-unit" name="exam-unit">
+                        <option value="">Select Unit</option>
+                        <option value="1">Unit 1</option>
+                        <option value="2">Unit 2</option>
+                        <option value="3">Unit 3</option>
+                        <option value="4">Unit 4</option>
+                        <option value="5">Unit 5</option>
+                    </select>
+                </div>
+                <div class="date-input-group">
+                    <label for="exam-date">Exam Date</label>
+                    <input type="date" id="exam-date" name="exam-date">
+                </div>
+                <div class="date-input-group">
+                    <label for="exam-time">Exam Time</label>
+                    <input type="time" id="exam-time" name="exam-time">
+                </div>
+            </div>
+            <div class="exam-info-display" id="exam-info-display" style="display: none;">
+                <i class="fas fa-calendar-alt"></i>
+                <span id="exam-info-text">Please select exam unit, date and time</span>
+            </div>
+        </div>
+
+        <!-- Configure Rooms Section -->
+        <div class="page-section active" id="configure-section">
+            <div class="input-section">
+                <div class="section-header">
+                    <i class="fas fa-table"></i>
+                    <h2>Configure Exam Rooms</h2>
+                </div>
+                <div class="upload-section">
+                    <input type="file" id="excel-upload" accept=".xlsx, .xls" style="display: none;">
+                    <button class="upload-btn" id="upload-btn">
+                        <i class="fas fa-upload"></i> Upload Excel File
+                    </button>
+                    <button class="add-row-btn" id="add-row-btn">
+                        <i class="fas fa-plus"></i> Add New Room
+                    </button>
+                </div>
+                <table class="input-table" id="input-table">
+                    <thead>
+                        <tr>
+                            <th>Room No</th>
+                            <th>Departments,Years & Subjects</th>
+                            <th>Staff Names</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="input-body">
+                    </tbody>
+                </table>
+            </div>
+            <div class="seating-plan">
+                <div class="section-header">
+                    <i class="fas fa-chair"></i>
+                    <h2>Generated Seating Arrangement</h2>
+                </div>
+                <div class="exam-header" id="exam-header" style="display: none;">
+                    <h3 id="exam-title">SEATING PLANNER</h3>
+                    <div class="exam-details" id="exam-details">
+                        Select unit, date and time to display exam information
+                    </div>
+                </div>
+                <div id="room-grid" class="room-grid"></div>
+                <div id="no-data" class="no-data">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h3>No Seating Arrangement</h3>
+                    <p>Configure rooms and generate seating arrangement to get started</p>
+                </div>
+                <div class="action-buttons">
+                    <button class="generate-btn" id="generate-btn">
+                        <i class="fas fa-magic"></i> GENERATE
+                    </button>
+                    <button class="arrange-btn" id="arrange-btn">
+                        <i class="fas fa-exchange-alt"></i> ARRANGE
+                    </button>
+                    <button class="clear-btn" id="clear-btn">
+                        <i class="fas fa-trash"></i> CLEAR
+                    </button>
+                    <button class="save-btn" id="save-btn">
+                        <i class="fas fa-save"></i> SAVE
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saved Arrangements Section -->
+        <div class="page-section" id="saved-section">
+            <div class="section-header">
+                <i class="fas fa-archive"></i>
+                <h2>Saved Arrangements</h2>
+            </div>
+            <div class="unit-section">
+                <button class="unit-btn active" data-unit="all">All Units</button>
+                <button class="unit-btn" data-unit="1">Unit 1</button>
+                <button class="unit-btn" data-unit="2">Unit 2</button>
+                <button class="unit-btn" data-unit="3">Unit 3</button>
+                <button class="unit-btn" data-unit="4">Unit 4</button>
+                <button class="unit-btn" data-unit="5">Unit 5</button>
+            </div>
+            <div id="saved-arrangements-container">
+                <div class="saved-arrangements-grid" id="saved-arrangements-grid"></div>
+                <div id="no-saved-data" class="empty-state">
+                    <i class="fas fa-folder-open"></i>
+                    <h3>No Saved Arrangements</h3>
+                    <p>Your saved seating arrangements will appear here</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Faculty Work Tracker Section -->
+        <div class="page-section" id="faculty-section">
+            <div class="section-header">
+                <i class="fas fa-users"></i>
+                <h2>Faculty Schedule</h2>
+            </div>
+            <div id="faculty-slot-container" class="faculty-slot-container">
+                <h3>Faculty Schedule</h3>
+                <div class="faculty-slots" id="faculty-slots"></div>
+                <button id="faculty-reset-btn" class="faculty-reset-btn">
+                    <i class="fas fa-refresh"></i> Restart
+                </button>
+            </div>
+        </div>
+
+        <!-- Attendance Section -->
+        <div class="page-section" id="attendance-section">
+            <div class="attendance-header">
+                <div class="section-header">
+                    <i class="fas fa-clipboard-check"></i>
+                    <h2>Exam Attendance</h2>
+                </div>
+                <div class="attendance-actions">
+                    <button class="absentees-btn" id="show-absentees-btn">
+                        <i class="fas fa-user-times"></i> View Absentees
+                    </button>
+                </div>
+            </div>
+            <div class="unit-selection" id="unit-selection"></div>
+            <div class="room-selection" id="room-selection"></div>
+            <div class="attendance-grid" id="attendance-grid">
+                <div class="exam-header" id="attendance-exam-header">
+                    <h3 id="attendance-exam-title"></h3>
+                    <div class="exam-details" id="attendance-exam-details"></div>
+                </div>
+                <div class="room-grid" id="attendance-room-grid"></div>
+                <div class="attendance-actions-bottom">
+                    <button class="absentees-btn" id="show-absentees-bottom-btn">
+                        <i class="fas fa-user-times"></i> View Absentees
+                    </button>
+                    <button class="next-room-btn" id="next-room-btn">
+                        <i class="fas fa-arrow-right"></i> Next Room
+                    </button>
+                </div>
+            </div>
+            <div class="absentees-section" id="absentees-section" style="display: none;">
+                <h2>Absentee List</h2>
+                <div class="total-fine-summary" id="total-fine-summary" style="display: none;">
+                    <h3><i class="fas fa-rupee-sign"></i> Total Fine Amount</h3>
+                    <div class="total-fine-amount" id="total-fine-amount">₹ 0</div>
+                </div>
+                <table class="absentees-table" id="absentees-table">
+                    <thead>
+                        <tr>
+                            <th>Roll No</th>
+                            <th>Department</th>
+                            <th>Year</th>
+                            <th>Subject</th>
+                            <th>Unit</th>
+                            <th>Date</th>
+                            <th>Day</th>
+                            <th>Fine Amount</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="absentees-body"></tbody>
+                </table>
+                <div id="no-absentees" class="no-data">No absentees recorded</div>
+            </div>
+        </div>
+
+        <!-- Room Details Section -->
+        <div class="page-section" id="room-details-section">
+            <div class="room-details-section">
+                <div class="section-header">
+                    <i class="fas fa-door-open"></i>
+                    <h2>Room Details & Configuration</h2>
+                </div>
+                <div class="add-room-btn-container">
+                    <button class="add-room-btn" id="add-new-room-btn">
+                        <i class="fas fa-plus"></i> Add New Room
+                    </button>
+                </div>
+                <div class="block-container">
+                    <div class="block-box">
+                        <div class="block-title"><i class="fas fa-building"></i> Block 3 Rooms</div>
+                        <div class="floor-container" id="floor-block3-4" data-block="block3" data-floor="4">
+                            <div class="floor-title"><i class="fas fa-layer-group"></i> 4th Floor</div>
+                            <div class="rooms-grid" id="block3-floor4"></div>
+                        </div>
+                        <div class="floor-container" id="floor-block3-3" data-block="block3" data-floor="3">
+                            <div class="floor-title"><i class="fas fa-layer-group"></i> 3rd Floor</div>
+                            <div class="rooms-grid" id="block3-floor3"></div>
+                        </div>
+                        <div class="floor-container" id="floor-block3-2" data-block="block3" data-floor="2">
+                            <div class="floor-title"><i class="fas fa-layer-group"></i> 2nd Floor</div>
+                            <div class="rooms-grid" id="block3-floor2"></div>
+                        </div>
+                    </div>
+                    <div class="block-box">
+                        <div class="block-title"><i class="fas fa-building"></i> Block 1 Rooms</div>
+                        <div class="floor-container" id="floor-block1-4" data-block="block1" data-floor="4">
+                            <div class="floor-title"><i class="fas fa-layer-group"></i> 4th Floor</div>
+                            <div class="rooms-grid" id="block1-floor4"></div>
+                        </div>
+                        <div class="floor-container" id="floor-block1-3" data-block="block1" data-floor="3">
+                            <div class="floor-title"><i class="fas fa-layer-group"></i> 3rd Floor</div>
+                            <div class="rooms-grid" id="block1-floor3"></div>
+                        </div>
+                        <div class="floor-container" id="floor-block1-2" data-block="block1" data-floor="2">
+                            <div class="floor-title"><i class="fas fa-layer-group"></i> 2nd Floor</div>
+                            <div class="rooms-grid" id="block1-floor2"></div>
+                        </div>
+                        <div class="floor-container" id="floor-block1-1" data-block="block1" data-floor="1">
+                            <div class="floor-title"><i class="fas fa-layer-group"></i> 1st Floor</div>
+                            <div class="rooms-grid" id="block1-floor1"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="matrix-configuration" id="matrix-configuration" style="display: none;">
+                    <div class="matrix-header">
+                        <div>
+                            <div class="matrix-title" id="selected-room-title">Room Configuration</div>
+                            <div class="matrix-subtitle">Configure seating matrix for <span id="selected-room-name"></span></div>
+                        </div>
+                        <button class="matrix-default-btn" id="set-default-btn">
+                            <i class="fas fa-undo"></i> Set to Default (5×9)
+                        </button>
+                    </div>
+                    <div class="matrix-inputs">
+                        <div class="matrix-input-group">
+                            <label for="rows-input">Number of Rows</label>
+                            <input type="number" id="rows-input" min="1" max="20" value="5">
+                        </div>
+                        <div class="matrix-input-group">
+                            <label for="columns-input">Number of Columns</label>
+                            <input type="number" id="columns-input" min="1" max="20" value="9">
+                        </div>
+                        <div class="matrix-input-group">
+                            <label for="capacity-input">Total Capacity</label>
+                            <input type="number" id="capacity-input" readonly value="45">
+                        </div>
+                    </div>
+                    <div class="row-wise-config" id="row-wise-config" style="display: none;">
+                        <div class="row-config-title">
+                            <i class="fas fa-chair"></i>
+                            Row-wise Seat Configuration
+                        </div>
+                        <div class="row-config-grid" id="row-config-grid"></div>
+                    </div>
+                    <div class="matrix-preview">
+                        <h4>Seating Matrix Preview</h4>
+                        <div id="matrix-visual-container"></div>
+                        <div class="matrix-total">
+                            Total Seats: <span id="total-seats">45</span>
+                        </div>
+                    </div>
+                    <div class="matrix-actions">
+                        <button class="matrix-cancel-btn" id="cancel-matrix-btn">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button class="matrix-save-btn" id="save-matrix-btn">
+                            <i class="fas fa-save"></i> Save Configuration
+                        </button>
+                    </div>
+                </div>
+                <div class="disabled-rooms-summary" id="disabled-rooms-summary" style="display: none;">
+                    <div class="section-header">
+                        <i class="fas fa-ban"></i>
+                        <h3>Disabled Rooms (Not Available for Exams)</h3>
+                    </div>
+                    <div class="rooms-grid" id="disabled-rooms-grid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const roomOrganization = {
+            'block3': {
+                name: 'Block 3',
+                floors: {
+                    '4': ['3405', '3406', '3407', '3408', '3409', '3410', '3411', '3412', '3413'],
+                    '3': ['3311', '3312', '3313', '3310', '3309', '3308', '3305', '3304'],
+                    '2': ['3203', '3202', '3404', '3402']
+                }
+            },
+            'block1': {
+                name: 'Block 1',
+                floors: {
+                    '4': ['1405', '1406', '1407'],
+                    '3': ['1305', '1306', '1304', '1303', '1302', '1301'],
+                    '2': ['1203', '1201'],
+                    '1': []
+                }
+            }
+        };
+
+        const specialRoomConfigs = {
+            '3404': {
+                description: 'Rows 1-4: 8 seats each, Row 5: 4 seats',
+                rowSeats: [8, 8, 8, 8, 4],
+                totalSeats: 36,
+                hasCustomRowConfig: true
+            },
+            '3402': {
+                description: 'All rows: 8 seats each',
+                rowSeats: [8, 8, 8, 8, 8],
+                totalSeats: 40,
+                hasCustomRowConfig: true
+            },
+            '3407': {
+                description: 'All rows: 8 seats each',
+                rowSeats: [8, 8, 8, 8, 8],
+                totalSeats: 40,
+                hasCustomRowConfig: true
+            }
+        };
+
+        const DEFAULT_ROWS = 5;
+        const DEFAULT_COLUMNS = 9;
+        const FINE_PER_ABSENT = 100;
+
+        const ROOM_MATRICES_KEY = 'roomMatrices';
+        const DISABLED_ROOMS_KEY = 'disabledRooms';
+        const FACULTY_WORKLOAD_KEY = 'facultyWorkload';
+        const ROOM_ORGANIZATION_KEY = 'roomOrganization';
+
+        let roomMatrices = JSON.parse(localStorage.getItem(ROOM_MATRICES_KEY) || '{}');
+        let disabledRooms = JSON.parse(localStorage.getItem(DISABLED_ROOMS_KEY) || '[]');
+        let currentSelectedRoomForMatrix = null;
+        let isRowWiseConfig = false;
+
+        const deptColors = {
+            'CSE': '#ff6b6b', 'IT': '#4ecdc4', 'ECE': '#45b7d1', 'MECH': '#96c93d',
+            'CIVIL': '#ff9f43', 'EEE': '#8338ec', 'CHEM': '#f4a261', 'AERO': '#2a9d8f',
+            'BIO': '#e76f51', 'AI': '#7209b7'
+        };
+
+        const yearColors = {
+            '1': '#ff69b4', '2': '#1e90ff', '3': '#ffff00', '4': '#800080'
+        };
+
+        let selectedArrangement = null;
+        let selectedRoom = null;
+        let selectedUnit = null;
+        let currentRoomIndex = 0;
+        let roomsForAttendance = [];
+        let absentees = JSON.parse(localStorage.getItem('absentees') || '[]');
+        let currentUnitFilter = 'all';
+        let draggedRoom = null;
+        let draggedRoomElement = null;
+
+        function getAllAvailableRooms() {
+            const allRooms = [];
+            Object.values(roomOrganization).forEach(block => {
+                Object.values(block.floors).forEach(floorRooms => {
+                    floorRooms.forEach(room => {
+                        if (!isRoomDisabled(room)) allRooms.push(room);
+                    });
+                });
+            });
+            return allRooms;
+        }
+
+        const facultyWorkload = {
+            data: JSON.parse(localStorage.getItem(FACULTY_WORKLOAD_KEY) || '{}'),
+            save() { localStorage.setItem(FACULTY_WORKLOAD_KEY, JSON.stringify(this.data)); },
+            addAssignment(facultyName, examDate, unit) {
+                if (!facultyName || !examDate || !unit) return false;
+                const key = facultyName.trim().toLowerCase();
+                if (!this.data[key]) this.data[key] = { name: facultyName.trim(), assignments: {} };
+                if (!this.data[key].assignments[unit]) this.data[key].assignments[unit] = [];
+                if (!this.data[key].assignments[unit].includes(examDate)) {
+                    this.data[key].assignments[unit].push(examDate);
+                    this.save();
+                }
+                return true;
+            },
+            canAssign(facultyName, unit) {
+                const key = facultyName.trim().toLowerCase();
+                if (!this.data[key] || !this.data[key].assignments[unit]) return true;
+                return this.data[key].assignments[unit].length < 3;
+            },
+            getAssignmentCount(facultyName, unit) {
+                const key = facultyName.trim().toLowerCase();
+                return this.data[key] && this.data[key].assignments[unit] ? this.data[key].assignments[unit].length : 0;
+            },
+            getAllFaculty() { return Object.values(this.data); },
+            reset() { this.data = {}; this.save(); }
+        };
+
+        function saveRoomOrganization() {
+            localStorage.setItem(ROOM_ORGANIZATION_KEY, JSON.stringify(roomOrganization));
+        }
+
+        function initializeRoomMatrices() {
+            const allRooms = [];
+            Object.values(roomOrganization).forEach(block => {
+                Object.values(block.floors).forEach(floorRooms => {
+                    floorRooms.forEach(room => allRooms.push(room));
+                });
+            });
+            allRooms.forEach(room => {
+                if (!roomMatrices[room]) {
+                    if (specialRoomConfigs[room]) {
+                        const config = specialRoomConfigs[room];
+                        roomMatrices[room] = {
+                            rows: config.rowSeats.length,
+                            columns: Math.max(...config.rowSeats),
+                            totalSeats: config.totalSeats,
+                            hasCustomRowConfig: config.hasCustomRowConfig,
+                            rowSeats: [...config.rowSeats]
+                        };
+                    } else {
+                        roomMatrices[room] = {
+                            rows: DEFAULT_ROWS, columns: DEFAULT_COLUMNS,
+                            totalSeats: DEFAULT_ROWS * DEFAULT_COLUMNS,
+                            hasCustomRowConfig: false,
+                            rowSeats: Array(DEFAULT_ROWS).fill(DEFAULT_COLUMNS)
+                        };
+                    }
+                }
+            });
+            saveRoomMatrices();
+        }
+
+        function saveRoomMatrices() { localStorage.setItem(ROOM_MATRICES_KEY, JSON.stringify(roomMatrices)); }
+        function saveDisabledRooms() { localStorage.setItem(DISABLED_ROOMS_KEY, JSON.stringify(disabledRooms)); }
+
+        function getRoomMatrix(roomNo) {
+            return roomMatrices[roomNo] || {
+                rows: DEFAULT_ROWS, columns: DEFAULT_COLUMNS,
+                totalSeats: DEFAULT_ROWS * DEFAULT_COLUMNS,
+                hasCustomRowConfig: false,
+                rowSeats: Array(DEFAULT_ROWS).fill(DEFAULT_COLUMNS)
+            };
+        }
+
+        function toggleRoomDisabled(roomNo) {
+            const index = disabledRooms.indexOf(roomNo);
+            if (index === -1) { disabledRooms.push(roomNo); showNotification(`Room ${roomNo} disabled for exams`, 'warning'); }
+            else { disabledRooms.splice(index, 1); showNotification(`Room ${roomNo} enabled for exams`, 'success'); }
+            saveDisabledRooms();
+            renderRoomOrganization();
+            updateDisabledRoomsSummary();
+        }
+
+        function isRoomDisabled(roomNo) { return disabledRooms.includes(roomNo); }
+
+        function addNewRoom() {
+            const roomNo = prompt('Enter new room number (e.g., 3414):');
+            if (!roomNo || !/^\d{4}$/.test(roomNo)) { showNotification('Please enter a valid 4-digit room number', 'error'); return; }
+            if (getRoomLocation(roomNo)) { showNotification(`Room ${roomNo} already exists`, 'warning'); return; }
+            const block = prompt('Enter block (block1 or block3):');
+            if (!['block1', 'block3'].includes(block)) { showNotification('Invalid block. Must be block1 or block3', 'error'); return; }
+            const floor = prompt('Enter floor number (1-4):');
+            if (!['1', '2', '3', '4'].includes(floor)) { showNotification('Invalid floor. Must be 1-4', 'error'); return; }
+            if (!roomOrganization[block].floors[floor]) roomOrganization[block].floors[floor] = [];
+            roomOrganization[block].floors[floor].push(roomNo);
+            roomMatrices[roomNo] = { rows: DEFAULT_ROWS, columns: DEFAULT_COLUMNS, totalSeats: DEFAULT_ROWS * DEFAULT_COLUMNS, hasCustomRowConfig: false, rowSeats: Array(DEFAULT_ROWS).fill(DEFAULT_COLUMNS) };
+            saveRoomOrganization();
+            saveRoomMatrices();
+            renderRoomOrganization();
+            showNotification(`Room ${roomNo} added to ${block}, floor ${floor}`, 'success');
+        }
+
+        function getRoomLocation(roomNo) {
+            for (const [blockKey, block] of Object.entries(roomOrganization)) {
+                for (const [floor, rooms] of Object.entries(block.floors)) {
+                    if (rooms.includes(roomNo)) return { block: blockKey, floor };
+                }
+            }
+            return null;
+        }
+
+        function moveRoom(roomNo, newBlock, newFloor) {
+            const location = getRoomLocation(roomNo);
+            if (!location) return false;
+            const oldRooms = roomOrganization[location.block].floors[location.floor];
+            const index = oldRooms.indexOf(roomNo);
+            if (index > -1) oldRooms.splice(index, 1);
+            if (!roomOrganization[newBlock].floors[newFloor]) roomOrganization[newBlock].floors[newFloor] = [];
+            roomOrganization[newBlock].floors[newFloor].push(roomNo);
+            saveRoomOrganization();
+            return true;
+        }
+
+        function setupDragAndDrop() {
+            const floorContainers = document.querySelectorAll('.floor-container');
+            document.addEventListener('dragstart', (e) => {
+                if (e.target.classList.contains('room-detail-btn') && !e.target.classList.contains('disabled')) {
+                    draggedRoom = e.target.dataset.room;
+                    draggedRoomElement = e.target;
+                    e.target.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', draggedRoom);
+                }
+            });
+            document.addEventListener('dragend', (e) => {
+                if (draggedRoomElement) { draggedRoomElement.classList.remove('dragging'); draggedRoomElement = null; }
+                draggedRoom = null;
+                floorContainers.forEach(container => container.classList.remove('drag-over'));
+            });
+            floorContainers.forEach(container => {
+                container.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (draggedRoom) { container.classList.add('drag-over'); e.dataTransfer.dropEffect = 'move'; }
+                });
+                container.addEventListener('dragleave', (e) => { if (draggedRoom) container.classList.remove('drag-over'); });
+                container.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    container.classList.remove('drag-over');
+                    if (draggedRoom) {
+                        const newBlock = container.dataset.block;
+                        const newFloor = container.dataset.floor;
+                        if (moveRoom(draggedRoom, newBlock, newFloor)) {
+                            renderRoomOrganization();
+                            showNotification(`Room ${draggedRoom} moved to ${newBlock}, floor ${newFloor}`, 'success');
+                        }
+                    }
+                });
+            });
+        }
+
+        function renderRoomOrganization() {
+            Object.entries(roomOrganization).forEach(([blockKey, block]) => {
+                Object.entries(block.floors).forEach(([floor, rooms]) => {
+                    const containerId = `${blockKey}-floor${floor}`;
+                    const container = document.getElementById(containerId);
+                    if (container) {
+                        container.innerHTML = '';
+                        rooms.forEach(room => {
+                            const isDisabled = isRoomDisabled(room);
+                            const matrix = getRoomMatrix(room);
+                            const button = document.createElement('button');
+                            button.className = `room-detail-btn ${isDisabled ? 'disabled' : ''}`;
+                            button.draggable = !isDisabled;
+                            button.innerHTML = `
+                                <div class="room-number">${room}</div>
+                                <div class="room-seats">${matrix.totalSeats} seats</div>
+                                ${isDisabled ? '<span class="room-status-badge">DISABLED</span>' : ''}
+                            `;
+                            button.title = isDisabled ? 'Click to enable room' : 'Click to configure or disable (Ctrl+Click to disable). Drag to move.';
+                            button.dataset.room = room;
+                            button.dataset.block = blockKey;
+                            button.dataset.floor = floor;
+                            button.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                if (e.ctrlKey || e.metaKey) toggleRoomDisabled(room);
+                                else selectRoomForMatrix(room);
+                            });
+                            container.appendChild(button);
+                        });
+                    }
+                });
+            });
+            setupDragAndDrop();
+        }
+
+        function updateDisabledRoomsSummary() {
+            const summary = document.getElementById('disabled-rooms-summary');
+            const grid = document.getElementById('disabled-rooms-grid');
+            if (disabledRooms.length > 0) {
+                summary.style.display = 'block';
+                grid.innerHTML = '';
+                disabledRooms.forEach(room => {
+                    const matrix = getRoomMatrix(room);
+                    const button = document.createElement('button');
+                    button.className = 'room-detail-btn disabled';
+                    button.innerHTML = `<div class="room-number">${room}</div><div class="room-seats">${matrix.totalSeats} seats</div><span class="room-status-badge">DISABLED</span>`;
+                    button.title = 'Click to enable room';
+                    button.dataset.room = room;
+                    button.addEventListener('click', () => toggleRoomDisabled(room));
+                    grid.appendChild(button);
+                });
+            } else {
+                summary.style.display = 'none';
+            }
+        }
+
+        function selectRoomForMatrix(roomNo) {
+            currentSelectedRoomForMatrix = roomNo;
+            const matrix = getRoomMatrix(roomNo);
+            document.getElementById('selected-room-name').textContent = `Room ${roomNo}`;
+            document.getElementById('selected-room-title').textContent = `Configure Room ${roomNo} Matrix`;
+            document.getElementById('matrix-configuration').style.display = 'block';
+            document.getElementById('rows-input').value = matrix.rows;
+            document.getElementById('columns-input').value = matrix.columns;
+            document.getElementById('capacity-input').value = matrix.totalSeats;
+            isRowWiseConfig = matrix.hasCustomRowConfig;
+            const rowWiseConfigDiv = document.getElementById('row-wise-config');
+            const rowConfigGrid = document.getElementById('row-config-grid');
+            if (isRowWiseConfig) {
+                rowWiseConfigDiv.style.display = 'block';
+                rowConfigGrid.innerHTML = '';
+                for (let i = 0; i < matrix.rows; i++) {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'row-config-item';
+                    rowDiv.innerHTML = `<label>Row ${i + 1} Seats:</label><input type="number" min="1" max="20" value="${matrix.rowSeats[i] || matrix.columns}" class="row-seats-input" data-row="${i}">`;
+                    rowConfigGrid.appendChild(rowDiv);
+                }
+                document.querySelectorAll('.row-seats-input').forEach(input => input.addEventListener('input', updateRowWiseMatrix));
+            } else {
+                rowWiseConfigDiv.style.display = 'none';
+            }
+            updateMatrixPreview();
+            scrollToMatrixConfiguration();
+        }
+
+        function updateMatrixPreview() {
+            const rows = parseInt(document.getElementById('rows-input').value) || 0;
+            const columns = parseInt(document.getElementById('columns-input').value) || 0;
+            let totalSeats = 0;
+            const visualContainer = document.getElementById('matrix-visual-container');
+            visualContainer.innerHTML = '';
+            if (isRowWiseConfig) {
+                const rowSeats = [];
+                document.querySelectorAll('.row-seats-input').forEach(input => {
+                    const seats = parseInt(input.value) || 0;
+                    rowSeats.push(seats);
+                    totalSeats += seats;
+                });
+                const matrixVisual = document.createElement('div');
+                matrixVisual.className = 'matrix-visual';
+                rowSeats.forEach(seats => {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'matrix-row';
+                    rowDiv.style.justifyContent = 'center';
+                    for (let col = 0; col < seats; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'matrix-cell filled';
+                        cell.textContent = 'S';
+                        rowDiv.appendChild(cell);
+                    }
+                    matrixVisual.appendChild(rowDiv);
+                });
+                visualContainer.appendChild(matrixVisual);
+            } else {
+                totalSeats = rows * columns;
+                const matrixVisual = document.createElement('div');
+                matrixVisual.className = 'matrix-visual';
+                matrixVisual.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+                for (let i = 0; i < rows * columns; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'matrix-cell filled';
+                    cell.textContent = 'S';
+                    matrixVisual.appendChild(cell);
+                }
+                visualContainer.appendChild(matrixVisual);
+            }
+            document.getElementById('total-seats').textContent = totalSeats;
+            document.getElementById('capacity-input').value = totalSeats;
+        }
+
+        function updateRowWiseMatrix() {
+            let maxColumns = 0;
+            document.querySelectorAll('.row-seats-input').forEach(input => {
+                const seats = parseInt(input.value) || 0;
+                if (seats > maxColumns) maxColumns = seats;
+            });
+            document.getElementById('columns-input').value = maxColumns;
+            updateMatrixPreview();
+        }
+
+        function setDefaultMatrix() {
+            document.getElementById('rows-input').value = DEFAULT_ROWS;
+            document.getElementById('columns-input').value = DEFAULT_COLUMNS;
+            isRowWiseConfig = false;
+            document.getElementById('row-wise-config').style.display = 'none';
+            updateMatrixPreview();
+            showNotification('Matrix reset to default (5×9)', 'success');
+        }
+
+        function saveMatrixConfiguration() {
+            if (!currentSelectedRoomForMatrix) return;
+            const rows = parseInt(document.getElementById('rows-input').value);
+            const columns = parseInt(document.getElementById('columns-input').value);
+            if (rows < 1 || columns < 1) { showNotification('Please enter valid row and column numbers', 'warning'); return; }
+            let totalSeats = 0;
+            let rowSeats = [];
+            if (isRowWiseConfig) {
+                document.querySelectorAll('.row-seats-input').forEach(input => {
+                    const seats = parseInt(input.value) || 0;
+                    if (seats < 1) { showNotification(`Row ${parseInt(input.dataset.row) + 1} must have at least 1 seat`, 'warning'); return; }
+                    rowSeats.push(seats);
+                    totalSeats += seats;
+                });
+                if (rowSeats.length !== rows) { showNotification('Row seat configuration does not match number of rows', 'error'); return; }
+            } else {
+                totalSeats = rows * columns;
+                rowSeats = Array(rows).fill(columns);
+            }
+            roomMatrices[currentSelectedRoomForMatrix] = { rows, columns, totalSeats, hasCustomRowConfig: isRowWiseConfig, rowSeats };
+            saveRoomMatrices();
+            document.getElementById('matrix-configuration').style.display = 'none';
+            renderRoomOrganization();
+            showNotification(`Matrix configuration saved for Room ${currentSelectedRoomForMatrix}`, 'success');
+        }
+
+        function cancelMatrixConfiguration() {
+            document.getElementById('matrix-configuration').style.display = 'none';
+            currentSelectedRoomForMatrix = null;
+        }
+
+        function scrollToMatrixConfiguration() {
+            document.getElementById('matrix-configuration').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function calculateFineForRollNo(rollNo) {
+            return absentees.filter(a => a.rollNo === rollNo).length * FINE_PER_ABSENT;
+        }
+
+        function calculateTotalFine() {
+            const rollNoCount = {};
+            absentees.forEach(a => { rollNoCount[a.rollNo] = (rollNoCount[a.rollNo] || 0) + 1; });
+            return Object.values(rollNoCount).reduce((sum, count) => sum + count * FINE_PER_ABSENT, 0);
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-circle' : 'times-circle'}"></i> ${message}`;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.classList.add('show');
+                setTimeout(() => { notification.classList.remove('show'); setTimeout(() => notification.remove(), 400); }, 3000);
+            }, 100);
+        }
+
+        function loadDefaultRow() {
+            const inputBody = document.getElementById('input-body');
+            if (inputBody.children.length === 0) inputBody.appendChild(createInputRow());
+        }
+
+        function createInputRow(data = {}) {
+            const tr = document.createElement('tr');
+            const deptEntries = data.departments && data.departments.length > 0 ? data.departments : [{ dept: '', year: '', subject: '', rollRange: '' }];
+            const deptEntriesHtml = deptEntries.map((entry, index) => `
+                <div class="dept-entry">
+                    <div class="dept-entry-header">
+                        <h4>Department Entry ${index + 1}</h4>
+                        <button type="button" class="remove-dept-btn" onclick="removeDeptEntry(this)"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="dept-entry-grid">
+                        <select class="dept-select">
+                            <option value="">Select Dept</option>
+                            <option value="CSE" ${entry.dept === 'CSE' ? 'selected' : ''}>Computer Science</option>
+                            <option value="IT" ${entry.dept === 'IT' ? 'selected' : ''}>Information Technology</option>
+                            <option value="ECE" ${entry.dept === 'ECE' ? 'selected' : ''}>Electronics</option>
+                            <option value="MECH" ${entry.dept === 'MECH' ? 'selected' : ''}>Mechanical</option>
+                            <option value="CIVIL" ${entry.dept === 'CIVIL' ? 'selected' : ''}>Civil Engineering</option>
+                            <option value="EEE" ${entry.dept === 'EEE' ? 'selected' : ''}>Electrical Engineering</option>
+                            <option value="CHEM" ${entry.dept === 'CHEM' ? 'selected' : ''}>Chemical Engineering</option>
+                            <option value="AERO" ${entry.dept === 'AERO' ? 'selected' : ''}>Aeronautical Engineering</option>
+                            <option value="BIO" ${entry.dept === 'BIO' ? 'selected' : ''}>Biotechnology</option>
+                            <option value="AI" ${entry.dept === 'AI' ? 'selected' : ''}>Artificial Intelligence</option>
+                        </select>
+                        <select class="year-select">
+                            <option value="">Select Year</option>
+                            <option value="1" ${entry.year === '1' ? 'selected' : ''}>1st Year</option>
+                            <option value="2" ${entry.year === '2' ? 'selected' : ''}>2nd Year</option>
+                            <option value="3" ${entry.year === '3' ? 'selected' : ''}>3rd Year</option>
+                            <option value="4" ${entry.year === '4' ? 'selected' : ''}>4th Year</option>
+                        </select>
+                        <input type="text" class="subject-input" placeholder="e.g., Mathematics" value="${entry.subject || ''}">
+                        <input type="text" class="roll-range" placeholder="e.g., CS101-CS115" value="${entry.rollRange || ''}">
+                    </div>
+                </div>
+            `).join('');
+            tr.innerHTML = `
+                <td><input type="text" placeholder="e.g., 201" value="${data.roomNo || ''}"></td>
+                <td>
+                    <div class="dept-container">${deptEntriesHtml}</div>
+                    <button type="button" class="add-dept-btn" onclick="addDeptEntry(this)"><i class="fas fa-plus"></i> Add Department</button>
+                </td>
+                <td><textarea placeholder="Enter staff names (one per line)" rows="3">${data.staff || ''}</textarea></td>
+                <td><button class="delete-btn"><i class="fas fa-trash"></i> Delete</button></td>
+            `;
+            return tr;
+        }
+
+        function addDeptEntry(button) {
+            const deptContainer = button.parentElement.querySelector('.dept-container');
+            const entryCount = deptContainer.querySelectorAll('.dept-entry').length + 1;
+            const newEntry = document.createElement('div');
+            newEntry.className = 'dept-entry';
+            newEntry.innerHTML = `
+                <div class="dept-entry-header">
+                    <h4>Department Entry ${entryCount}</h4>
+                    <button type="button" class="remove-dept-btn" onclick="removeDeptEntry(this)"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="dept-entry-grid">
+                    <select class="dept-select">
+                        <option value="">Select Dept</option>
+                        <option value="CSE">Computer Science</option>
+                        <option value="IT">Information Technology</option>
+                        <option value="ECE">Electronics</option>
+                        <option value="MECH">Mechanical</option>
+                        <option value="CIVIL">Civil Engineering</option>
+                        <option value="EEE">Electrical Engineering</option>
+                        <option value="CHEM">Chemical Engineering</option>
+                        <option value="AERO">Aeronautical Engineering</option>
+                        <option value="BIO">Biotechnology</option>
+                        <option value="AI">Artificial Intelligence</option>
+                    </select>
+                    <select class="year-select">
+                        <option value="">Select Year</option>
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
+                    </select>
+                    <input type="text" class="subject-input" placeholder="e.g., Mathematics">
+                    <input type="text" class="roll-range" placeholder="e.g., CS101-CS115">
+                </div>
+            `;
+            deptContainer.appendChild(newEntry);
+            showNotification('Department entry added', 'success');
+        }
+
+        function removeDeptEntry(button) {
+            const deptContainer = button.closest('.dept-container');
+            const entries = deptContainer.querySelectorAll('.dept-entry');
+            if (entries.length > 1) {
+                button.closest('.dept-entry').remove();
+                Array.from(deptContainer.querySelectorAll('.dept-entry')).forEach((entry, index) => {
+                    entry.querySelector('h4').textContent = `Department Entry ${index + 1}`;
+                });
+                showNotification('Department entry removed', 'success');
+            } else {
+                showNotification('At least one department entry must remain', 'warning');
+            }
+        }
+
+        function attachDeleteListeners() {
+            const inputBody = document.getElementById('input-body');
+            inputBody.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (inputBody.children.length > 1) { btn.closest('tr').remove(); showNotification('Room row deleted', 'success'); }
+                    else showNotification('At least one room must remain', 'warning');
+                });
+            });
+        }
+
+        function updateFacultySlots() {
+            const slotsContainer = document.getElementById('faculty-slots');
+            if (!slotsContainer) return;
+            slotsContainer.innerHTML = '';
+            const allFaculty = facultyWorkload.getAllFaculty();
+            if (allFaculty.length === 0) { slotsContainer.innerHTML = '<p class="no-faculty">No faculty assigned yet</p>'; return; }
+            const facultyByUnit = {};
+            allFaculty.forEach(faculty => {
+                Object.keys(faculty.assignments).forEach(unit => {
+                    if (!facultyByUnit[unit]) facultyByUnit[unit] = [];
+                    facultyByUnit[unit].push({ name: faculty.name, assignments: faculty.assignments[unit], unit });
+                });
+            });
+            Object.keys(facultyByUnit).sort().forEach(unit => {
+                const unitHeader = document.createElement('h4');
+                unitHeader.textContent = `Unit ${unit}`;
+                unitHeader.style.cssText = 'margin-top:20px;color:var(--primary-color)';
+                slotsContainer.appendChild(unitHeader);
+                facultyByUnit[unit].forEach(faculty => {
+                    const slot = document.createElement('div');
+                    slot.className = `faculty-slot ${faculty.assignments.length >= 3 ? 'overloaded' : ''}`;
+                    const assignmentDates = faculty.assignments.map(date => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })).join(', ');
+                    slot.innerHTML = `
+                        <div class="faculty-info">
+                            <span class="faculty-name">${faculty.name}</span>
+                            <span class="assignment-count ${faculty.assignments.length >= 3 ? 'warning' : ''}">${faculty.assignments.length}/3</span>
+                        </div>
+                        <div class="assignment-dates">${assignmentDates}</div>
+                        ${faculty.assignments.length >= 3 ? '<div class="overload-warning">⚠️ Maximum workload reached</div>' : ''}
+                    `;
+                    slotsContainer.appendChild(slot);
+                });
+            });
+        }
+
+        function validateAndProcessStaff(staffNames, examDate, unit) {
+            const staffArray = staffNames.split('\n').map(s => s.trim()).filter(s => s);
+            const validStaff = [];
+            const overloadedStaff = [];
+            staffArray.forEach(staffName => {
+                if (!facultyWorkload.canAssign(staffName, unit)) overloadedStaff.push(staffName);
+                else { validStaff.push(staffName); facultyWorkload.addAssignment(staffName, examDate, unit); }
+            });
+            if (overloadedStaff.length > 0) { showFacultyOverloadWarning(overloadedStaff, unit); return null; }
+            updateFacultySlots();
+            return validStaff;
+        }
+
+        function showFacultyOverloadWarning(overloadedStaff, unit) {
+            const modal = document.createElement('div');
+            modal.className = 'faculty-warning-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header"><h3><i class="fas fa-exclamation-triangle"></i> Faculty Workload Warning</h3></div>
+                    <div class="modal-body">
+                        <p>The following faculty members have reached their maximum workload (3 assignments) for Unit ${unit}:</p>
+                        <ul>${overloadedStaff.map(name => `<li>${name} (${facultyWorkload.getAssignmentCount(name, unit)}/3 assignments)</li>`).join('')}</ul>
+                        <p>Please either:</p>
+                        <ul><li>Remove these faculty members from the assignment</li><li>Choose different faculty members</li><li>Reset faculty workload if needed</li></ul>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="modal-btn secondary" onclick="closeModal()">Cancel</button>
+                        <button class="modal-btn primary" onclick="showResetConfirmation()">Reset Faculty Workload</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            window.closeModal = function() { modal.remove(); delete window.closeModal; delete window.showResetConfirmation; };
+            window.showResetConfirmation = function() { if (confirm('Are you sure you want to reset all faculty workload data?')) { resetAllFaculty(); closeModal(); } };
+        }
+
+        function resetAllFaculty() {
+            if (confirm('This will permanently delete all faculty workload records. Are you sure?')) {
+                facultyWorkload.reset();
+                updateFacultySlots();
+                showNotification('All faculty workload data has been reset', 'success');
+            }
+        }
+
+        function loadSavedArrangements() {
+            const savedArrangements = JSON.parse(localStorage.getItem('savedArrangements') || '[]');
+            const savedArrangementsGrid = document.getElementById('saved-arrangements-grid');
+            const noSavedData = document.getElementById('no-saved-data');
+            savedArrangementsGrid.innerHTML = '';
+            const filteredArrangements = currentUnitFilter === 'all' ? savedArrangements : savedArrangements.filter(arr => arr.unit === currentUnitFilter);
+            noSavedData.style.display = filteredArrangements.length ? 'none' : 'block';
+            filteredArrangements.forEach((arrangement, index) => {
+                const card = document.createElement('div');
+                card.className = 'saved-arrangement-card';
+                const dateObj = new Date(arrangement.date);
+                const day = dateObj.toLocaleString('en-US', { weekday: 'long' });
+                const formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                const formattedTime = new Date(`1970-01-01T${arrangement.time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+                const roomCount = arrangement.generatedData.length;
+                const totalStudents = arrangement.generatedData.reduce((sum, room) => sum + room.seats.filter(seat => !seat.isEmpty).length, 0);
+                card.innerHTML = `
+                    <div class="saved-card-header">
+                        <span class="saved-card-date">${formattedDate}</span>
+                        <span class="saved-card-day">${day}</span>
+                    </div>
+                    <div class="saved-card-info">
+                        <p><strong>Unit:</strong> ${arrangement.unit}</p>
+                        <p><strong>Time:</strong> ${formattedTime}</p>
+                    </div>
+                    <div class="saved-card-stats">
+                        <span><strong>Rooms:</strong> ${roomCount}</span>
+                        <span><strong>Students:</strong> ${totalStudents}</span>
+                    </div>
+                    <div class="saved-card-actions">
+                        <button class="view-btn" data-index="${savedArrangements.indexOf(arrangement)}"><i class="fas fa-eye"></i> View</button>
+                        <button class="delete-saved-btn" data-index="${savedArrangements.indexOf(arrangement)}"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                `;
+                savedArrangementsGrid.appendChild(card);
+            });
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const savedArrangements = JSON.parse(localStorage.getItem('savedArrangements') || '[]');
+                    loadArrangement(savedArrangements[btn.dataset.index]);
+                });
+            });
+            document.querySelectorAll('.delete-saved-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (confirm('Are you sure you want to delete this saved arrangement?')) {
+                        const savedArrangements = JSON.parse(localStorage.getItem('savedArrangements') || '[]');
+                        savedArrangements.splice(btn.dataset.index, 1);
+                        localStorage.setItem('savedArrangements', JSON.stringify(savedArrangements));
+                        loadSavedArrangements();
+                        loadUnitButtons();
+                        showNotification('Saved arrangement deleted', 'success');
+                    }
+                });
+            });
+        }
+
+        // Helper: build seat boxes for a room card
+        function buildSeatContainer(seatContainer, roomNo, seats) {
+            const roomMatrix = getRoomMatrix(roomNo);
+            if (roomMatrix.hasCustomRowConfig) {
+                seatContainer.style.display = 'flex';
+                seatContainer.style.flexDirection = 'column';
+                seatContainer.style.gap = '8px';
+                let seatIndex = 0;
+                for (let row = 0; row < roomMatrix.rows; row++) {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.style.cssText = 'display:flex;gap:8px;justify-content:center';
+                    const seatsInRow = roomMatrix.rowSeats[row] || roomMatrix.columns;
+                    for (let col = 0; col < seatsInRow; col++) {
+                        rowDiv.appendChild(createSeatBox(seats[seatIndex]));
+                        seatIndex++;
+                    }
+                    seatContainer.appendChild(rowDiv);
+                }
+            } else {
+                seatContainer.style.gridTemplateColumns = `repeat(${roomMatrix.columns}, 45px)`;
+                seatContainer.style.justifyContent = 'center';
+                seats.forEach(seat => seatContainer.appendChild(createSeatBox(seat)));
+            }
+        }
+
+        function createSeatBox(seat, isAttendance = false, roomTitle = '') {
+            const seatBox = document.createElement('div');
+            if (seat && !seat.isEmpty) {
+                const isAbsent = isAttendance && absentees.some(a =>
+                    a.rollNo === seat.rollNo && a.date === selectedArrangement.date && a.room === roomTitle
+                );
+                seatBox.className = `seat-box ${isAbsent ? 'absent' : ''}`;
+                seatBox.style.setProperty('--dept-color', seat.deptColor);
+                seatBox.style.setProperty('--year-color', seat.yearColor);
+                seatBox.dataset.dept = seat.dept;
+                seatBox.dataset.year = seat.year;
+                seatBox.dataset.rollNo = seat.rollNo;
+                seatBox.dataset.subject = seat.subject;
+                seatBox.innerHTML = `<span class="roll-label">Roll No</span><span class="roll-no">${seat.rollNo}</span><span class="staff">${seat.staff}</span>`;
+                if (isAttendance) seatBox.addEventListener('click', () => toggleAttendance(seat, roomTitle));
+            } else {
+                seatBox.className = 'seat-box empty';
+                seatBox.innerHTML = `<span class="roll-label">Roll No</span><span class="roll-no">Empty</span><span class="staff"></span>`;
+            }
+            return seatBox;
+        }
+
+        function loadArrangement(arrangement) {
+            selectedArrangement = arrangement;
+            document.getElementById('exam-unit').value = arrangement.unit;
+            document.getElementById('exam-date').value = arrangement.date;
+            document.getElementById('exam-time').value = arrangement.time;
+            updateExamInfoDisplay();
+            const inputBody = document.getElementById('input-body');
+            inputBody.innerHTML = '';
+            arrangement.inputData.forEach(data => inputBody.appendChild(createInputRow(data)));
+            const roomGrid = document.getElementById('room-grid');
+            roomGrid.innerHTML = '';
+            arrangement.generatedData.forEach(room => {
+                const roomCard = document.createElement('div');
+                roomCard.className = 'room-card';
+                roomCard.innerHTML = `<div class="room-title">${room.title}</div><div class="seat-container"></div>`;
+                const roomNo = room.title.replace('Room ', '').trim();
+                buildSeatContainer(roomCard.querySelector('.seat-container'), roomNo, room.seats);
+                roomGrid.appendChild(roomCard);
+            });
+            attachDeleteListeners();
+            toggleNoData();
+            switchSection('configure');
+            showNotification('Arrangement loaded successfully', 'success');
+        }
+
+        function loadUnitButtons() {
+            const savedArrangements = JSON.parse(localStorage.getItem('savedArrangements') || '[]');
+            const unitSelection = document.getElementById('unit-selection');
+            unitSelection.innerHTML = '';
+            const arrangementsByUnit = {};
+            savedArrangements.forEach(arr => {
+                if (!arrangementsByUnit[arr.unit]) arrangementsByUnit[arr.unit] = [];
+                arrangementsByUnit[arr.unit].push(arr);
+            });
+            const sortedUnits = Object.keys(arrangementsByUnit).sort((a, b) => a - b);
+            sortedUnits.forEach(unit => {
+                const uniqueDates = [...new Set(arrangementsByUnit[unit].map(arr => arr.date))].sort();
+                uniqueDates.forEach(date => {
+                    const unitArrangements = arrangementsByUnit[unit].filter(arr => arr.date === date);
+                    const times = unitArrangements.map(arr => new Date(`1970-01-01T${arr.time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }));
+                    const dateObj = new Date(date);
+                    const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const day = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                    let totalRooms = 0, totalStudents = 0;
+                    unitArrangements.forEach(arr => {
+                        totalRooms += arr.generatedData.length;
+                        totalStudents += arr.generatedData.reduce((sum, room) => sum + room.seats.filter(seat => !seat.isEmpty).length, 0);
+                    });
+                    const button = document.createElement('button');
+                    button.className = 'unit-btn';
+                    button.innerHTML = `
+                        <div class="unit-title">Unit ${unit}</div>
+                        <div><i class="fas fa-calendar"></i> ${formattedDate}</div>
+                        <div><i class="fas fa-clock"></i> ${times.join(', ')}</div>
+                        <div class="unit-date">${day}</div>
+                        <div class="room-stats">${totalRooms} rooms, ${totalStudents} students</div>
+                    `;
+                    button.dataset.unit = unit;
+                    button.dataset.date = date;
+                    button.addEventListener('click', () => selectUnitForAttendance(unit, date));
+                    unitSelection.appendChild(button);
+                });
+            });
+            unitSelection.style.display = sortedUnits.length > 0 ? 'grid' : 'none';
+            if (sortedUnits.length === 0) unitSelection.innerHTML = '<p class="no-data">No units available for attendance</p>';
+        }
+
+        function selectUnitForAttendance(unit, date) {
+            selectedUnit = unit;
+            document.getElementById('unit-selection').style.display = 'none';
+            document.getElementById('room-selection').style.display = 'grid';
+            loadRoomButtons(unit, date);
+        }
+
+        function loadRoomButtons(unit, date) {
+            const savedArrangements = JSON.parse(localStorage.getItem('savedArrangements') || '[]');
+            const roomSelection = document.getElementById('room-selection');
+            roomSelection.innerHTML = '';
+            roomsForAttendance = [];
+            const unitDateArrangements = savedArrangements.filter(arr => arr.unit === unit && arr.date === date);
+            unitDateArrangements.forEach(arrangement => {
+                arrangement.generatedData.forEach(room => {
+                    const roomKey = room.title;
+                    if (!roomsForAttendance.some(r => r.title === roomKey)) {
+                        const studentCount = room.seats.filter(seat => !seat.isEmpty).length;
+                        roomsForAttendance.push({ title: roomKey, arrangement, studentCount });
+                        const button = document.createElement('button');
+                        button.className = 'room-btn';
+                        button.innerHTML = `<div>${room.title}</div><div class="room-stats">${studentCount} students</div>`;
+                        button.addEventListener('click', () => selectRoom(arrangement, room.title));
+                        roomSelection.appendChild(button);
+                    }
+                });
+            });
+            roomSelection.style.display = roomsForAttendance.length > 0 ? 'grid' : 'none';
+            if (roomsForAttendance.length === 0) roomSelection.innerHTML = '<p class="no-data">No rooms available for this unit and date</p>';
+        }
+
+        function selectRoom(arrangement, roomTitle) {
+            selectedArrangement = arrangement;
+            selectedRoom = roomTitle;
+            currentRoomIndex = roomsForAttendance.findIndex(room => room.title === roomTitle);
+            document.getElementById('room-selection').style.display = 'none';
+            document.getElementById('attendance-grid').classList.add('active');
+            loadAttendanceView();
+            showNotification('Ready to mark attendance', 'success');
+        }
+
+        function loadAttendanceView() {
+            if (!selectedArrangement || !selectedRoom) return;
+            const dateObj = new Date(selectedArrangement.date);
+            const day = dateObj.toLocaleString('en-US', { weekday: 'long' });
+            const formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            const formattedTime = new Date(`1970-01-01T${selectedArrangement.time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+            document.getElementById('attendance-exam-title').textContent = `Attendance for ${selectedRoom} (Unit ${selectedArrangement.unit})`;
+            document.getElementById('attendance-exam-details').textContent = `Scheduled for ${formattedDate} at ${formattedTime} (${day})`;
+            document.getElementById('attendance-room-grid').innerHTML = '';
+            const roomData = selectedArrangement.generatedData.find(room => room.title === selectedRoom);
+            if (!roomData) return;
+            const roomCard = document.createElement('div');
+            roomCard.className = 'room-card';
+            roomCard.innerHTML = `<div class="room-title">${selectedRoom}</div><div class="seat-container"></div>`;
+            const seatContainer = roomCard.querySelector('.seat-container');
+            const roomNo = selectedRoom.replace('Room ', '').trim();
+            const roomMatrix = getRoomMatrix(roomNo);
+            if (roomMatrix.hasCustomRowConfig) {
+                seatContainer.style.display = 'flex';
+                seatContainer.style.flexDirection = 'column';
+                seatContainer.style.gap = '8px';
+                let seatIndex = 0;
+                for (let row = 0; row < roomMatrix.rows; row++) {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.style.cssText = 'display:flex;gap:8px;justify-content:center';
+                    const seatsInRow = roomMatrix.rowSeats[row] || roomMatrix.columns;
+                    for (let col = 0; col < seatsInRow; col++) {
+                        const seat = roomData.seats[seatIndex];
+                        rowDiv.appendChild(createSeatBox(seat, true, selectedRoom));
+                        seatIndex++;
+                    }
+                    seatContainer.appendChild(rowDiv);
+                }
+            } else {
+                seatContainer.style.gridTemplateColumns = `repeat(${roomMatrix.columns}, 45px)`;
+                seatContainer.style.justifyContent = 'center';
+                roomData.seats.forEach(seat => seatContainer.appendChild(createSeatBox(seat, true, selectedRoom)));
+            }
+            document.getElementById('attendance-room-grid').appendChild(roomCard);
+            updateAbsenteesTable();
+        }
+
+        function toggleAttendance(seat, roomTitle) {
+            const absenteeRecord = {
+                rollNo: seat.rollNo, dept: seat.dept, year: seat.year, subject: seat.subject,
+                date: selectedArrangement.date, day: new Date(selectedArrangement.date).toLocaleString('en-US', { weekday: 'long' }),
+                room: roomTitle, unit: selectedArrangement.unit, fine: FINE_PER_ABSENT
+            };
+            const existingIndex = absentees.findIndex(a => a.rollNo === seat.rollNo && a.date === selectedArrangement.date && a.room === roomTitle);
+            if (existingIndex === -1) { absentees.push(absenteeRecord); showNotification(`${seat.rollNo} marked as absent. Fine: ₹${FINE_PER_ABSENT}`, 'warning'); }
+            else { absentees.splice(existingIndex, 1); showNotification(`${seat.rollNo} marked as present. Fine removed.`, 'success'); }
+            localStorage.setItem('absentees', JSON.stringify(absentees));
+            loadAttendanceView();
+            updateAbsenteesTable();
+        }
+
+        function updateAbsenteesTable() {
+            const absenteesBody = document.getElementById('absentees-body');
+            const noAbsentees = document.getElementById('no-absentees');
+            const totalFineSummary = document.getElementById('total-fine-summary');
+            const totalFineAmount = document.getElementById('total-fine-amount');
+            absenteesBody.innerHTML = '';
+            noAbsentees.style.display = absentees.length ? 'none' : 'block';
+            if (absentees.length > 0) {
+                totalFineSummary.style.display = 'block';
+                totalFineAmount.textContent = `₹ ${calculateTotalFine()}`;
+            } else {
+                totalFineSummary.style.display = 'none';
+            }
+            absentees.forEach((absentee, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${absentee.rollNo}</td><td>${absentee.dept}</td><td>${absentee.year}</td>
+                    <td>${absentee.subject}</td><td>${absentee.unit}</td>
+                    <td>${new Date(absentee.date).toLocaleDateString('en-US')}</td>
+                    <td>${absentee.day}</td>
+                    <td><span class="fine-amount">₹ ${calculateFineForRollNo(absentee.rollNo)}</span></td>
+                    <td><button class="delete-absentee-btn" data-index="${index}"><i class="fas fa-trash"></i> Delete</button></td>
+                `;
+                absenteesBody.appendChild(row);
+            });
+            document.querySelectorAll('.delete-absentee-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.closest('.delete-absentee-btn').dataset.index);
+                    if (confirm('Are you sure you want to remove this absentee record?')) {
+                        const removed = absentees[index];
+                        absentees.splice(index, 1);
+                        localStorage.setItem('absentees', JSON.stringify(absentees));
+                        updateAbsenteesTable();
+                        showNotification(`Absentee record deleted for ${removed.rollNo}. Fine reduced by ₹${FINE_PER_ABSENT}`, 'success');
+                    }
+                });
+            });
+        }
+
+        function showAbsenteesTable() {
+            document.getElementById('unit-selection').style.display = 'none';
+            document.getElementById('room-selection').style.display = 'none';
+            document.getElementById('attendance-grid').style.display = 'none';
+            document.getElementById('absentees-section').style.display = 'block';
+            updateAbsenteesTable();
+        }
+
+        function updateExamInfoDisplay() {
+            const unit = document.getElementById('exam-unit').value;
+            const date = document.getElementById('exam-date').value;
+            const time = document.getElementById('exam-time').value;
+            const examInfoDisplay = document.getElementById('exam-info-display');
+            const examHeader = document.getElementById('exam-header');
+            const examDetails = document.getElementById('exam-details');
+            if (unit && date && time) {
+                const dateObj = new Date(date);
+                const day = dateObj.toLocaleString('en-US', { weekday: 'long' });
+                const formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                const formattedTime = new Date(`1970-01-01T${time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+                document.getElementById('exam-info-text').textContent = `Unit ${unit} - ${formattedDate} at ${formattedTime} (${day})`;
+                examInfoDisplay.style.display = 'block';
+                examHeader.style.display = 'block';
+                examDetails.textContent = `Unit ${unit} scheduled for ${formattedDate} at ${formattedTime} (${day})`;
+            } else {
+                examInfoDisplay.style.display = 'none';
+                examHeader.style.display = 'none';
+            }
+        }
+
+        function toggleNoData() {
+            const roomGrid = document.getElementById('room-grid');
+            document.getElementById('no-data').style.display = roomGrid.children.length ? 'none' : 'block';
+        }
+
+        function switchSection(section) {
+            document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.sidebar-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('configure-header').style.display = section === 'configure' ? 'block' : 'none';
+            if (section === 'configure') {
+                document.getElementById('nav-configure').classList.add('active');
+                document.getElementById('configure-section').classList.add('active');
+            } else if (section === 'saved') {
+                document.getElementById('nav-saved').classList.add('active');
+                document.getElementById('saved-section').classList.add('active');
+            } else if (section === 'faculty') {
+                document.getElementById('nav-faculty').classList.add('active');
+                document.getElementById('faculty-section').classList.add('active');
+            } else if (section === 'attendance') {
+                document.getElementById('nav-attendance').classList.add('active');
+                document.getElementById('attendance-section').classList.add('active');
+                document.getElementById('attendance-grid').classList.remove('active');
+                document.getElementById('unit-selection').style.display = 'grid';
+                document.getElementById('room-selection').style.display = 'none';
+                document.getElementById('absentees-section').style.display = 'none';
+            } else if (section === 'room-details') {
+                document.getElementById('nav-room-details').classList.add('active');
+                document.getElementById('room-details-section').classList.add('active');
+                document.getElementById('matrix-configuration').style.display = 'none';
+            }
+        }
+
+        function initializeRoomDetails() {
+            initializeRoomMatrices();
+            renderRoomOrganization();
+            updateDisabledRoomsSummary();
+            document.getElementById('rows-input').addEventListener('input', updateMatrixPreview);
+            document.getElementById('columns-input').addEventListener('input', updateMatrixPreview);
+            document.getElementById('set-default-btn').addEventListener('click', setDefaultMatrix);
+            document.getElementById('cancel-matrix-btn').addEventListener('click', cancelMatrixConfiguration);
+            document.getElementById('save-matrix-btn').addEventListener('click', saveMatrixConfiguration);
+            document.getElementById('add-new-room-btn').addEventListener('click', addNewRoom);
+        }
+
+        function initialize() {
+            loadDefaultRow();
+            updateExamInfoDisplay();
+            loadSavedArrangements();
+            toggleNoData();
+            attachDeleteListeners();
+            updateFacultySlots();
+            loadUnitButtons();
+            updateAbsenteesTable();
+            initializeRoomDetails();
+            document.getElementById('nav-configure').addEventListener('click', () => switchSection('configure'));
+            document.getElementById('nav-saved').addEventListener('click', () => switchSection('saved'));
+            document.getElementById('nav-faculty').addEventListener('click', () => switchSection('faculty'));
+            document.getElementById('nav-attendance').addEventListener('click', () => switchSection('attendance'));
+            document.getElementById('nav-room-details').addEventListener('click', () => switchSection('room-details'));
+            document.querySelectorAll('.unit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentUnitFilter = btn.dataset.unit;
+                    loadSavedArrangements();
+                });
+            });
+            document.getElementById('faculty-reset-btn').addEventListener('click', resetAllFaculty);
+            document.getElementById('show-absentees-btn').addEventListener('click', showAbsenteesTable);
+            document.getElementById('show-absentees-bottom-btn').addEventListener('click', showAbsenteesTable);
+            document.getElementById('next-room-btn').addEventListener('click', () => {
+                if (roomsForAttendance.length === 0) return;
+                currentRoomIndex = (currentRoomIndex + 1) % roomsForAttendance.length;
+                const nextRoom = roomsForAttendance[currentRoomIndex];
+                selectRoom(nextRoom.arrangement, nextRoom.title);
+            });
+            document.getElementById('generate-btn').addEventListener('click', generateSeatingArrangement);
+            document.getElementById('add-row-btn').addEventListener('click', () => {
+                document.getElementById('input-body').appendChild(createInputRow());
+                attachDeleteListeners();
+                showNotification('New room row added', 'success');
+            });
+            document.getElementById('exam-unit').addEventListener('change', updateExamInfoDisplay);
+            document.getElementById('exam-date').addEventListener('change', updateExamInfoDisplay);
+            document.getElementById('exam-time').addEventListener('change', updateExamInfoDisplay);
+            document.getElementById('upload-btn').addEventListener('click', () => document.getElementById('excel-upload').click());
+            document.getElementById('excel-upload').addEventListener('change', handleExcelUpload);
+            document.getElementById('arrange-btn').addEventListener('click', arrangeSeats);
+            document.getElementById('clear-btn').addEventListener('click', clearAllData);
+            document.getElementById('save-btn').addEventListener('click', saveArrangement);
+        }
+
+        function generateSeatingArrangement() {
+            const examUnit = document.getElementById('exam-unit');
+            const examDate = document.getElementById('exam-date');
+            const examTime = document.getElementById('exam-time');
+            if (!examUnit.value || !examDate.value || !examTime.value) { showNotification('Please select exam unit, date and time', 'warning'); return; }
+            const rows = document.getElementById('input-body').querySelectorAll('tr');
+            if (rows.length === 0) { showNotification('Please add at least one room', 'warning'); return; }
+            const roomGrid = document.getElementById('room-grid');
+            roomGrid.innerHTML = '';
+            let allValid = true;
+            const roomGroups = {};
+            rows.forEach(row => {
+                const roomNo = row.querySelector('input').value;
+                const staffNames = row.querySelector('textarea').value;
+                const deptEntries = row.querySelectorAll('.dept-entry');
+                if (!roomNo || !staffNames || deptEntries.length === 0) { allValid = false; showNotification('Please fill all fields correctly', 'warning'); return; }
+                const validStaff = validateAndProcessStaff(staffNames, examDate.value, examUnit.value);
+                if (validStaff === null) { allValid = false; return; }
+                if (validStaff.length === 0) { allValid = false; showNotification('Please provide at least one staff name', 'warning'); return; }
+                if (!roomGroups[roomNo]) roomGroups[roomNo] = { seats: [] };
+                let staffIndex = 0;
+                let totalSeats = 0;
+                deptEntries.forEach(entry => {
+                    const dept = entry.querySelector('.dept-select').value;
+                    const year = entry.querySelector('.year-select').value;
+                    const subject = entry.querySelector('.subject-input').value;
+                    const rollRange = entry.querySelector('.roll-range').value;
+                    if (!dept || !year || !subject || !rollRange) { allValid = false; showNotification('Please fill all department entry fields including subject', 'warning'); return; }
+                    const [startRoll, endRoll] = rollRange.split('-').map(s => s.trim());
+                    if (!startRoll || !endRoll) { allValid = false; showNotification('Invalid roll number range format. Use CS101-CS115', 'error'); return; }
+                    const startNum = parseInt(startRoll.slice(-3));
+                    const endNum = parseInt(endRoll.slice(-3));
+                    const prefix = startRoll.slice(0, -3);
+                    if (isNaN(startNum) || isNaN(endNum) || startNum >= endNum) { allValid = false; showNotification('Invalid roll number range', 'error'); return; }
+                    totalSeats += endNum - startNum + 1;
+                    const currentStaff = validStaff[staffIndex % validStaff.length] || 'No Staff';
+                    staffIndex++;
+                    for (let i = startNum; i <= endNum; i++) {
+                        roomGroups[roomNo].seats.push({
+                            rollNo: `${prefix}${String(i).padStart(3, '0')}`, dept, year, subject,
+                            staff: currentStaff, deptColor: deptColors[dept] || '#999', yearColor: yearColors[year] || '#ccc'
+                        });
+                    }
+                });
+                const roomMatrix = getRoomMatrix(roomNo);
+                if (totalSeats > roomMatrix.totalSeats) { allValid = false; showNotification(`Room ${roomNo} exceeds maximum capacity of ${roomMatrix.totalSeats} seats`, 'error'); return; }
+            });
+            if (!allValid) return;
+            Object.entries(roomGroups).forEach(([key, data]) => {
+                const roomCard = document.createElement('div');
+                roomCard.className = 'room-card';
+                roomCard.innerHTML = `<div class="room-title">Room ${key}</div><div class="seat-container"></div>`;
+                const seatContainer = roomCard.querySelector('.seat-container');
+                const roomMatrix = getRoomMatrix(key);
+                if (roomMatrix.hasCustomRowConfig) {
+                    seatContainer.style.display = 'flex';
+                    seatContainer.style.flexDirection = 'column';
+                    seatContainer.style.gap = '8px';
+                    let seatIndex = 0;
+                    for (let row = 0; row < roomMatrix.rows; row++) {
+                        const rowDiv = document.createElement('div');
+                        rowDiv.style.cssText = 'display:flex;gap:8px;justify-content:center';
+                        const seatsInRow = roomMatrix.rowSeats[row] || roomMatrix.columns;
+                        for (let col = 0; col < seatsInRow; col++) {
+                            rowDiv.appendChild(createSeatBox(data.seats[seatIndex]));
+                            seatIndex++;
+                        }
+                        seatContainer.appendChild(rowDiv);
+                    }
+                } else {
+                    seatContainer.style.gridTemplateColumns = `repeat(${roomMatrix.columns}, 45px)`;
+                    seatContainer.style.justifyContent = 'center';
+                    const totalSeats = roomMatrix.rows * roomMatrix.columns;
+                    for (let i = 0; i < totalSeats; i++) seatContainer.appendChild(createSeatBox(data.seats[i]));
+                }
+                roomGrid.appendChild(roomCard);
+            });
+            toggleNoData();
+            updateFacultySlots();
+            showNotification('Seating arrangement generated successfully!', 'success');
+        }
+
+        function arrangeSeats() {
+            const roomGrid = document.getElementById('room-grid');
+            if (!roomGrid.children.length) {
+                showNotification('Please generate seating arrangement first', 'warning');
+                return;
+            }
+
+            roomGrid.childNodes.forEach(roomCard => {
+                const seatContainer = roomCard.querySelector('.seat-container');
+                const allSeatBoxes = seatContainer.querySelectorAll('.seat-box');
+                const seats = Array.from(allSeatBoxes).map(seatBox => {
+                    if (seatBox.classList.contains('empty')) return { isEmpty: true };
+                    return {
+                        rollNo: seatBox.dataset.rollNo,
+                        dept: seatBox.dataset.dept,
+                        year: seatBox.dataset.year,
+                        subject: seatBox.dataset.subject,
+                        staff: seatBox.querySelector('.staff').textContent,
+                        deptColor: seatBox.style.getPropertyValue('--dept-color'),
+                        yearColor: seatBox.style.getPropertyValue('--year-color')
+                    };
+                });
+
+                const occupiedSeats = seats.filter(seat => !seat.isEmpty);
+
+                const groupByDeptYear = {};
+                occupiedSeats.forEach(seat => {
+                    const key = `${seat.dept}-${seat.year}`;
+                    if (!groupByDeptYear[key]) groupByDeptYear[key] = [];
+                    groupByDeptYear[key].push(seat);
+                });
+
+                const groupKeys = Object.keys(groupByDeptYear);
+                if (groupKeys.length <= 1) {
+                    showNotification('No rearrangement needed for single department-year group', 'warning');
+                    return;
+                }
+
+                const roomNo = roomCard.querySelector('.room-title').textContent.replace('Room ', '').trim();
+                const roomMatrix = getRoomMatrix(roomNo);
+                const totalRows = roomMatrix.rows;
+                const totalColumns = roomMatrix.columns;
+
+                // Calculate how many seats each column has
+                const colSizes = [];
+                for (let col = 0; col < totalColumns; col++) {
+                    let count = 0;
+                    for (let row = 0; row < totalRows; row++) {
+                        if (roomMatrix.hasCustomRowConfig) {
+                            const seatsInRow = roomMatrix.rowSeats[row] || totalColumns;
+                            if (col < seatsInRow) count++;
+                        } else {
+                            count++;
+                        }
+                    }
+                    colSizes.push(count);
+                }
+
+                // Clone group queues
+                const groupQueues = {};
+                groupKeys.forEach(k => { groupQueues[k] = [...groupByDeptYear[k]]; });
+
+                // CORE LOGIC:
+                // Assign one group per column in strict rotation (col 0→group0, col 1→group1, col 2→group2, col 3→group0, ...)
+                // For each column, fill ALL slots from that group.
+                // If that group is exhausted, take remaining slots from other groups (in rotation order)
+                // BUT skip to the next available group that hasn't been used in adjacent columns.
+                // This ensures no two adjacent columns ever have the same department.
+
+                // Build column-to-group assignments first (which group STARTS each column)
+                const colGroupAssignment = []; // colGroupAssignment[col] = groupKey
+                const numGroups = groupKeys.length;
+                for (let col = 0; col < totalColumns; col++) {
+                    colGroupAssignment.push(groupKeys[col % numGroups]);
+                }
+
+                // Now fill seats column by column strictly following the assignment
+                // seatGrid[row][col] = seat or null
+                const seatGrid = Array.from({ length: totalRows }, () => Array(totalColumns).fill(null));
+
+                // We need to distribute seats such that:
+                // - Each column is filled primarily with its assigned group
+                // - Overflow seats from exhausted groups go to the SAME column (not spilling into adjacent)
+                // - But we must ensure all students are placed
+
+                // Better approach: pre-calculate how many seats each group needs per column
+                // Strategy: round-robin fill - go through columns repeatedly, 
+                // each pass place one seat from the assigned group into the column
+                // This guarantees strict alternation
+
+                // Build per-column seat lists in strict alternating order
+                const colSeats = Array.from({ length: totalColumns }, () => []);
+
+                // Pass 1: Fill each column with its primary group seats, one-by-one in round-robin
+                // This ensures even distribution
+                let hasMore = true;
+                while (hasMore) {
+                    hasMore = false;
+                    for (let col = 0; col < totalColumns; col++) {
+                        const primaryGroup = colGroupAssignment[col];
+                        if (groupQueues[primaryGroup] && groupQueues[primaryGroup].length > 0) {
+                            if (colSeats[col].length < colSizes[col]) {
+                                colSeats[col].push(groupQueues[primaryGroup].shift());
+                                hasMore = true;
+                            }
+                        }
+                    }
+                }
+
+                // Pass 2: Place any remaining students (overflow) into columns that still have empty slots
+                // Place overflow in columns where the adjacent columns don't have the same dept
+                // To maintain separation, place overflow students at the END of columns 
+                // (bottom rows) in columns assigned to their group index offset by numGroups
+                const remainingGroups = groupKeys.filter(k => groupQueues[k].length > 0);
+                
+                if (remainingGroups.length > 0) {
+                    // Find columns with available slots, sorted by their group assignment
+                    // to minimize adjacency conflicts
+                    for (const key of remainingGroups) {
+                        while (groupQueues[key].length > 0) {
+                            // Find best column: prefer column assigned to same group (already has same dept)
+                            // then prefer columns not adjacent to same-dept column
+                            let bestCol = -1;
+                            
+                            // First try: find a column already containing this group's students 
+                            // that still has space (extending existing group column is better than 
+                            // creating a new adjacent same-dept column)
+                            for (let col = 0; col < totalColumns; col++) {
+                                if (colSeats[col].length < colSizes[col]) {
+                                    const hasSameDept = colSeats[col].some(s => `${s.dept}-${s.year}` === key);
+                                    if (hasSameDept) { bestCol = col; break; }
+                                }
+                            }
+                            
+                            // Second try: find any column with space where neighbors differ
+                            if (bestCol === -1) {
+                                for (let col = 0; col < totalColumns; col++) {
+                                    if (colSeats[col].length < colSizes[col]) {
+                                        const leftKey = col > 0 && colSeats[col-1].length > 0 
+                                            ? `${colSeats[col-1][0].dept}-${colSeats[col-1][0].year}` : '';
+                                        const rightKey = col < totalColumns-1 && colSeats[col+1].length > 0 
+                                            ? `${colSeats[col+1][0].dept}-${colSeats[col+1][0].year}` : '';
+                                        if (leftKey !== key && rightKey !== key) { bestCol = col; break; }
+                                    }
+                                }
+                            }
+                            
+                            // Last resort: any column with space
+                            if (bestCol === -1) {
+                                for (let col = 0; col < totalColumns; col++) {
+                                    if (colSeats[col].length < colSizes[col]) { bestCol = col; break; }
+                                }
+                            }
+                            
+                            if (bestCol === -1) break; // no space left
+                            colSeats[bestCol].push(groupQueues[key].shift());
+                        }
+                    }
+                }
+
+                // Place colSeats into seatGrid (column-major: col 0 top-to-bottom, then col 1, etc.)
+                for (let col = 0; col < totalColumns; col++) {
+                    let seatIdx = 0;
+                    for (let row = 0; row < totalRows; row++) {
+                        if (roomMatrix.hasCustomRowConfig) {
+                            const seatsInRow = roomMatrix.rowSeats[row] || totalColumns;
+                            if (col >= seatsInRow) continue;
+                        }
+                        if (seatIdx < colSeats[col].length) {
+                            seatGrid[row][col] = colSeats[col][seatIdx++];
+                        }
+                    }
+                }
+
+                // Re-render seat container
+                seatContainer.innerHTML = '';
+
+                if (roomMatrix.hasCustomRowConfig) {
+                    seatContainer.style.display = 'flex';
+                    seatContainer.style.flexDirection = 'column';
+                    seatContainer.style.gap = '8px';
+                    for (let row = 0; row < totalRows; row++) {
+                        const rowDiv = document.createElement('div');
+                        rowDiv.style.cssText = 'display:flex;gap:8px;justify-content:center';
+                        const seatsInRow = roomMatrix.rowSeats[row] || totalColumns;
+                        for (let col = 0; col < seatsInRow; col++) {
+                            rowDiv.appendChild(createSeatBox(seatGrid[row][col] || { isEmpty: true }));
+                        }
+                        seatContainer.appendChild(rowDiv);
+                    }
+                } else {
+                    seatContainer.style.gridTemplateColumns = `repeat(${totalColumns}, 45px)`;
+                    seatContainer.style.justifyContent = 'center';
+                    for (let row = 0; row < totalRows; row++) {
+                        for (let col = 0; col < totalColumns; col++) {
+                            seatContainer.appendChild(createSeatBox(seatGrid[row][col] || { isEmpty: true }));
+                        }
+                    }
+                }
+            });
+
+            showNotification('Seats arranged — departments alternated across columns!', 'success');
+        }
+
+        function clearAllData() {
+            const roomGrid = document.getElementById('room-grid');
+            const inputBody = document.getElementById('input-body');
+            if (!roomGrid.children.length && inputBody.children.length === 1) { showNotification('Nothing to clear', 'warning'); return; }
+            if (confirm('Are you sure you want to clear everything?')) {
+                roomGrid.innerHTML = '';
+                inputBody.innerHTML = '';
+                document.getElementById('exam-unit').value = '';
+                document.getElementById('exam-date').value = '';
+                document.getElementById('exam-time').value = '';
+                updateExamInfoDisplay();
+                loadDefaultRow();
+                toggleNoData();
+                attachDeleteListeners();
+                showNotification('All data cleared', 'success');
+            }
+        }
+
+        function saveArrangement() {
+            const examUnit = document.getElementById('exam-unit');
+            const examDate = document.getElementById('exam-date');
+            const examTime = document.getElementById('exam-time');
+            if (!examUnit.value || !examDate.value || !examTime.value) { showNotification('Please select exam unit, date and time before saving', 'warning'); return; }
+            const inputData = Array.from(document.getElementById('input-body').querySelectorAll('tr')).map(row => ({
+                roomNo: row.querySelector('input').value,
+                departments: Array.from(row.querySelectorAll('.dept-entry')).map(entry => ({
+                    dept: entry.querySelector('.dept-select').value,
+                    year: entry.querySelector('.year-select').value,
+                    subject: entry.querySelector('.subject-input').value,
+                    rollRange: entry.querySelector('.roll-range').value
+                })),
+                staff: row.querySelector('textarea').value
+            }));
+            const generatedData = Array.from(document.getElementById('room-grid').children).map(room => ({
+                title: room.querySelector('.room-title').textContent,
+                seats: Array.from(room.querySelectorAll('.seat-box')).map(box => {
+                    if (box.classList.contains('empty')) return { isEmpty: true };
+                    return {
+                        rollNo: box.dataset.rollNo, dept: box.dataset.dept || '', year: box.dataset.year || '',
+                        subject: box.dataset.subject || '', staff: box.querySelector('.staff').textContent,
+                        deptColor: box.style.getPropertyValue('--dept-color'), yearColor: box.style.getPropertyValue('--year-color')
+                    };
+                })
+            }));
+            if (!inputData.length && !generatedData.length) { showNotification('Nothing to save', 'warning'); return; }
+            const savedArrangements = JSON.parse(localStorage.getItem('savedArrangements') || '[]');
+            const unitDateTimeKey = `${examUnit.value}_${examDate.value}_${examTime.value}`;
+            const existingIndex = savedArrangements.findIndex(arr => arr.unitDateTimeKey === unitDateTimeKey);
+            if (existingIndex !== -1) {
+                savedArrangements[existingIndex] = { unitDateTimeKey, unit: examUnit.value, date: examDate.value, time: examTime.value, inputData, generatedData };
+                showNotification('Arrangement updated successfully!', 'success');
+            } else {
+                savedArrangements.push({ unitDateTimeKey, unit: examUnit.value, date: examDate.value, time: examTime.value, inputData, generatedData });
+                showNotification('Arrangement saved successfully!', 'success');
+            }
+            localStorage.setItem('savedArrangements', JSON.stringify(savedArrangements));
+            loadSavedArrangements();
+            loadUnitButtons();
+            switchSection('saved');
+        }
+
+        function handleExcelUpload() {
+            const file = document.getElementById('excel-upload').files[0];
+            if (!file) { showNotification('Please select an Excel file', 'warning'); return; }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                jsonData.forEach(row => {
+                    const departments = row['Departments, Years & Subjects']
+                        ? row['Departments, Years & Subjects'].split(';').map(entry => { const [dept, year, subject, rollRange] = entry.split('|'); return { dept, year, subject, rollRange }; })
+                        : [];
+                    document.getElementById('input-body').appendChild(createInputRow({ roomNo: row['Room No'], departments, staff: row['Staff Names'] }));
+                });
+                attachDeleteListeners();
+                showNotification('Excel data uploaded and appended successfully', 'success');
+                document.getElementById('excel-upload').value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>
