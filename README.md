@@ -50,6 +50,16 @@ This application is built from scratch using pure frontend web technologies:
 
 ```text
 Exam-Seat-Arrangement/
+├── css/                     # Stylesheets for all pages
+│   ├── dashboard.css
+│   ├── faculty.css
+│   ├── home.css
+│   ├── login.css
+│   └── student.css
+├── js/                      # JavaScript logic & seating algorithms
+│   ├── faculty.js
+│   ├── login.js
+│   └── student.js
 ├── screenshots/             # Application screenshots & UI previews
 │   ├── Home_page.png
 │   ├── Dashboard_page.png
@@ -62,6 +72,7 @@ Exam-Seat-Arrangement/
 │   ├── View_Absentees.png
 │   ├── Student_Page.png
 │   └── Saved_Arrangements.png
+├── .gitattributes           # GitHub Linguist language detection rules
 ├── .gitignore               # Git ignore configuration
 ├── dashboard.html           # Portal navigation dashboard
 ├── faculty.html             # Faculty management & seating generation console

@@ -1,0 +1,4 @@
+# GitHub Linguist language detection overrides
+*.js linguist-detectable=true
+*.css linguist-detectable=true
+*.html linguist-detectable=true
