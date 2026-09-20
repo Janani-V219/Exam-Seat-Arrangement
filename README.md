@@ -1,6 +1,14 @@
 # 🎓 Automated Exam Seating Arrangement System
 
-A modern, responsive web application designed to simplify and automate exam hall seating allocation, attendance tracking, and student seat inquiry for educational institutions.
+<div align="center">
+
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+
+**A modern, responsive web application built with HTML5, CSS3, and JavaScript (ES6+) to simplify and automate exam hall seating allocation, attendance tracking, and student seat inquiry.**
+
+</div>
 
 ---
 
@@ -9,6 +17,19 @@ A modern, responsive web application designed to simplify and automate exam hall
 Managing exam seating arrangements manually can be time-consuming, prone to errors, and challenging when organizing multiple departments and examination halls. The **Automated Exam Seating Arrangement System** provides an end-to-end digital workflow for:
 - **Exam Cell Administrators & Faculty**: Configuring exam halls, assigning students systematically to avoid malpractices, taking attendance, and recording absentees.
 - **Students**: Searching and locating their assigned exam halls, row, and seat number effortlessly.
+
+---
+
+## 🛠️ Built With (Technologies Used)
+
+This application is built from scratch using pure frontend web technologies:
+
+| Technology | Role & Implementation Details |
+| :--- | :--- |
+| <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/html5/html5-original.svg" width="24" height="24"/> **HTML5** | • Structured semantic markup across all portals (`home`, `dashboard`, `login`, `faculty`, `student`).<br>• Dynamic containers for room layouts, student input tables, and absentee reports.<br>• Clean form elements and navigation anchors. |
+| <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/css3/css3-original.svg" width="24" height="24"/> **CSS3** | • **Glassmorphism & Gradients**: Sleek card designs with backdrop filters and pastel gradient backgrounds.<br>• **Responsive Layouts**: Flexbox and CSS Grid for adaptable multi-device screen scaling.<br>• **Micro-animations**: Smooth hover transitions, shimmer button effects, and `@keyframes` entrance animations (`fadeInDown`, `fadeIn`). |
+| <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/javascript/javascript-original.svg" width="24" height="24"/> **JavaScript (ES6+)** | • **Seating Algorithm**: Computes student seat distribution across rooms and bench layouts dynamically.<br>• **Visual Grid Rendering**: Programmatically creates interactive hall and bench representations in the DOM.<br>• **Attendance & Absentee Tracker**: Real-time attendance toggling, absentee list generation, and state handling.<br>• **Student Lookup**: Fast search query matching for student roll numbers and assigned seat details.<br>• **Storage & State**: Saves generated arrangements and configurations locally in the browser. |
+| <img src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/svgs/solid/icons.svg" width="20" height="20"/> **Font Awesome & Google Fonts** | Modern icon sets and Google Poppins typography for an intuitive and clean user experience. |
 
 ---
 
@@ -22,15 +43,6 @@ Managing exam seating arrangements manually can be time-consuming, prone to erro
 - **📋 Real-time Attendance & Absentee Tracker**: Mark and view absentees instantly during the examination.
 - **💾 Saved Arrangements**: Store and retrieve seating plans for future reference and record-keeping.
 - **🔍 Instant Student Seat Search**: Quick search interface for students using their registration number.
-
----
-
-## 🛠️ Technology Stack
-
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Styling & Icons**: Custom CSS (Modern Gradient UI, Glassmorphism, Responsive Grid/Flexbox), [Font Awesome](https://fontawesome.com/)
-- **Typography**: [Google Fonts (Poppins)](https://fonts.google.com/specimen/Poppins)
-- **Deployment**: Static Web Hosting / GitHub Pages compatible
 
 ---
 
